@@ -1,9 +1,9 @@
 import pygame
-import time
 
-from petun_obj import PetunaObj
-from treats_obj import TreatObj
-from player_obj import PlayerObj
+from objects.petun_obj import PetunaObj
+from objects.treats_obj import TreatObj
+from objects.player_obj import PlayerObj
+from objects.cursor_obj import CursorObj
 
 
 class PetunaGame:
@@ -19,22 +19,32 @@ class PetunaGame:
         self.cat = PetunaObj()
         self.treat = TreatObj()
         self.player = PlayerObj()
+        self.menu_cursor = CursorObj()
 
-        self.timer = 5
+        self.init_timer = 5
 
         self.velocity = 10
         self.score_value = 0
 
         self.game.init()
+        self.game.mixer.init()
 
-    def draw_info(self, text_line=None, x=None, y=None):
-        font = self.game.font.SysFont('comicsans', 25, 1)
+        # self.running_sound = pygame.mixer.music.load('static/audio/cat_eat.mp3')
+        # self.go_sound = pygame.mixer.music.load('static/audio/cat_go.mp3')
+
+    def draw_info(self, text_line=None, x=None, y=None , font_size=25):
+        font = self.game.font.SysFont('comicsans', font_size, 1)
         if text_line is None and x is None and y is None:
             render = font.render(f'Score: {self.score_value}', True, (255, 255, 255))
             self.screen.blit(render, (7, 7))
         else:
             render = font.render(text_line, True, (255, 255, 255))
             self.screen.blit(render, (x, y))
+
+    def draw_cursor(self, txt):
+        font = self.game.font.SysFont('comicsans', self.menu_cursor.font_size, 1)
+        render_font = font.render(txt, True, (255, 255, 255))
+        self.screen.blit(render_font, (self.menu_cursor.pos_x, self.menu_cursor.pos_y))
 
     def draw_game_over(self):
         font = self.game.font.SysFont('comicsans', 36, 1)
@@ -59,14 +69,91 @@ class PetunaGame:
     def game_over_screen(self):
         self.screen.fill((0, 0, 0))
 
+    def eatSound(self):
+        self.game.mixer.music.load('static/audio/cat_eat.mp3')
+        self.game.mixer.music.play(0)
+
+    def goSound(self):
+        self.game.mixer.music.load('static/audio/cat_go.mp3')
+        self.game.mixer.music.play(0)
+
+    def reset_game(self):
+        self.timer = self.init_timer
+        self.player.points = 0
+
+
+    def run_the_game(self):
+        fs = 1
+
+        while fs:
+            self.screen.fill((60, 60, 60))
+
+            self.draw_info(' * Welcome To Petunia Game * ', 40, 25, 35)
+            self.draw_info(' ************************************* ', 40, 70, 35)
+            self.draw_info('  START GAME ', 150, 120, 30)
+            self.draw_info('  PLAYER NAME ', 145, 170, 30)
+            self.draw_info('  SCOREBOARD ', 144, 220, 30)
+
+            self.draw_cursor('>>')
+
+            for event in self.game.event.get():
+                if event.type == pygame.QUIT:
+                    go = 0
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_DOWN:
+                        if self.menu_cursor.pos_y < 200:
+                            self.menu_cursor.pos_y += 50
+
+                    if event.key == pygame.K_UP:
+                        if self.menu_cursor.pos_y > 120:
+                            self.menu_cursor.pos_y -= 50
+
+                    if event.key == pygame.K_RETURN:
+                        if self.menu_cursor.pos_y == 120:
+                            fs = 0
+                            self.game_running = True
+                            self.run_game()
+
+
+            self.game.display.update()
+            self.clock.tick(60)
+
+        self.game.quit()
+
+    def run_game_over(self):
+
+        self.goSound()
+
+        go = 1
+        while go:
+            self.game.display.update()
+            self.screen.fill((60, 60, 60))
+            self.draw_game_over()
+
+            for event in self.game.event.get():
+                if event.type == pygame.QUIT:
+                    go = 0
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        print("SPPACDEEEEEE")
+                        go = 0
+                        self.game_running = True
+                        self.run_game()
+
+            self.clock.tick(60)
+
+        self.game.quit()
 
     def run_game(self):
 
+        self.reset_game()
         self.cat.set_graph()
         self.treat.set_treat_pic()
-        # self.treat.set_graph()
 
         while self.game_running:
+
+            tmr = self.run_timmer()
+            self.game.display.update()
             self.screen.fill((52, 106, 107))
             self.screen.blit(self.cat.catimg, self.cat.catrect)
             self.screen.blit(self.treat.treatimg, self.treat.treatrect)
@@ -77,11 +164,12 @@ class PetunaGame:
             self.treat.spawn()
             self.cat.spawn()
 
-            for event in pygame.event.get():
-                if event == pygame.QUIT:
+            for event in self.game.event.get():
+                if event.type == pygame.QUIT:
                     self.game_running = False
 
-            key_pressed = pygame.key.get_pressed()
+            key_pressed = self.game.key.get_pressed()
+
             if key_pressed[pygame.K_ESCAPE]:
                 self.player.reset_points()
 
@@ -102,6 +190,7 @@ class PetunaGame:
                     self.cat.pos_x += 10
 
             if self.cat.catrect.colliderect(self.treat.treatrect):
+                self.eatSound()
                 if self.treat.selected_skin == 'treats_2.png':
                     self.player.add_special_points()
                     self.treat.rand_move()
@@ -111,11 +200,10 @@ class PetunaGame:
                 self.score_value = self.player.points
 
             # print(self.cat.pos_x, self.cat.pos_y)
-            tmr = self.run_timmer()
 
             if tmr == 0:
-                self.screen.fill((60, 60, 60))
-                self.draw_game_over()
+                self.game_running = False
+                self.run_game_over()
 
             self.game.display.update()
             self.clock.tick(60)

@@ -15,7 +15,7 @@ class PetunaObj:
         # self.set_graph()
 
     def set_graph(self):
-        peti_img = pygame.image.load('cat.png')
+        peti_img = pygame.image.load('static/images/cat.png')
         peti_img = pygame.transform.scale(peti_img, (self.cat_H, self.cat_W))
         peti_img.convert()
         peti_rect = peti_img.get_rect()

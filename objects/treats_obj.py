@@ -8,10 +8,8 @@ class TreatObj:
         self.pos_y = random.randint(1, 400)
 
         self.treats_img_list = [
-            'treats.png',
-            'treats_2.png',
-            'treats.png',
-            'treats_2.png',
+            'static/images/treats.png',
+            'static/images/treats_2.png',
         ]
 
         self.selected_skin = None

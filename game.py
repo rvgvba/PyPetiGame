@@ -20,7 +20,7 @@ class PetunaGame:
         self.treat = TreatObj()
         self.player = PlayerObj()
 
-        self.timer = 37
+        self.timer = 5
 
         self.velocity = 10
         self.score_value = 0
@@ -35,6 +35,16 @@ class PetunaGame:
         else:
             render = font.render(text_line, True, (255, 255, 255))
             self.screen.blit(render, (x, y))
+
+    def draw_game_over(self):
+        font = self.game.font.SysFont('comicsans', 36, 1)
+        render_go = font.render(f'* G A M E O V E R *', True, (255, 255, 255))
+        render_player = font.render(f'Player:  {self.player.player_name}', True, (255, 255, 255))
+        render_final_score = font.render(f'Final Score: {self.player.points}', True, (255, 255, 255))
+
+        self.screen.blit(render_go, (110, 90))
+        self.screen.blit(render_player, (160, 190))
+        self.screen.blit(render_final_score, (140, 140))
 
     def drawing(self):
         self.draw_info()
@@ -53,9 +63,8 @@ class PetunaGame:
     def run_game(self):
 
         self.cat.set_graph()
-        self.treat.set_graph()
-
-        starting_time = self.clock.tick()
+        self.treat.set_treat_pic()
+        # self.treat.set_graph()
 
         while self.game_running:
             self.screen.fill((52, 106, 107))
@@ -65,16 +74,14 @@ class PetunaGame:
 
             self.draw_info(f'Time: {str(int(self.timer))}', 390, 30)
 
-            self.cat.spawn()
             self.treat.spawn()
+            self.cat.spawn()
 
             for event in pygame.event.get():
                 if event == pygame.QUIT:
                     self.game_running = False
 
-
             key_pressed = pygame.key.get_pressed()
-
             if key_pressed[pygame.K_ESCAPE]:
                 self.player.reset_points()
 
@@ -95,16 +102,20 @@ class PetunaGame:
                     self.cat.pos_x += 10
 
             if self.cat.catrect.colliderect(self.treat.treatrect):
-                self.treat.rand_move()
-                self.player.add_point()
+                if self.treat.selected_skin == 'treats_2.png':
+                    self.player.add_special_points()
+                    self.treat.rand_move()
+                else:
+                    self.player.add_point()
+                    self.treat.rand_move()
                 self.score_value = self.player.points
 
             # print(self.cat.pos_x, self.cat.pos_y)
             tmr = self.run_timmer()
 
-
             if tmr == 0:
-                self.draw_info(f'Final Score: {self.player.points}', 190, 170)
+                self.screen.fill((60, 60, 60))
+                self.draw_game_over()
 
             self.game.display.update()
             self.clock.tick(60)

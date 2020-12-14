@@ -1,30 +1,49 @@
 import pygame
 import random
 
+
 class TreatObj:
     def __init__(self):
-        self.pos_x = random.randint(0, 400)
-        self.pos_y =  random.randint(0, 400)
+        self.pos_x = random.randint(1, 400)
+        self.pos_y = random.randint(1, 400)
+
+        self.treats_img_list = [
+            'treats.png',
+            'treats_2.png',
+            'treats.png',
+            'treats_2.png',
+        ]
+
+        self.selected_skin = None
+
         self.treatimg = None
         self.treatrect = None
 
         # self.set_graph()
-
-    def set_graph(self):
-        treats_img = pygame.image.load('treats.jpg')
-        treats_img = pygame.transform.scale(treats_img, (30, 30))
+    def set_treat_pic(self):
+        rndm_pic = random.choice(self.treats_img_list)
+        treats_img = pygame.image.load(rndm_pic)
+        treats_img = pygame.transform.scale(treats_img, (40, 40))
         treats_img.convert()
-        treats_rect = treats_img.get_rect()
 
         self.treatimg = treats_img
+        self.selected_skin = rndm_pic
+        self.set_graph()
+        self.spawn()
+
+    def set_graph(self):
+        treats_rect = self.treatimg.get_rect()
         self.treatrect = treats_rect
 
     def rand_move(self):
-        self.pos_x = random.randint(0, 400)
-        self.pos_y = random.randint(0, 400)
+        self.pos_x = random.randint(1, 482)
+        self.pos_y = random.randint(1, 388)
+        self.set_treat_pic()
 
     def spawn(self):
         self.treatrect.center = self.pos_x, self.pos_y
+
+
 
 
 

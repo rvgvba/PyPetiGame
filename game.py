@@ -58,7 +58,7 @@ class PetunaGame:
 
     def drawing(self):
         self.draw_info()
-        self.draw_info(f'Player: {self.player.player_name}', 390, 10)
+        self.draw_info(f'Player: {self.player.player_name}', 370, 10)
 
     def run_timmer(self):
         if self.timer > 0:
@@ -81,10 +81,31 @@ class PetunaGame:
         self.timer = self.init_timer
         self.player.points = 0
 
+    def run_new_name(self):
+        inserting_new_name = 1
+        new_name = ''
+        while inserting_new_name:
+            self.screen.fill((255,124,100))
+            self.draw_info('Insert new player name: ', 150, 150)
+
+            for event in self.game.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_BACKSPACE:
+                        new_name = new_name[:-1]
+                    if event.key == pygame.K_RETURN:
+                        self.player.player_name = new_name[:4].upper()
+                        self.run_the_game()
+                        inserting_new_name = 0
+                    else:
+                        new_name += event.unicode
+
+            self.draw_info(f'{new_name}', 150, 180)
+            self.game.display.update()
+
 
     def run_the_game(self):
         fs = 1
-
+        new_player_name = ''
         while fs:
             self.screen.fill((60, 60, 60))
 
@@ -113,6 +134,13 @@ class PetunaGame:
                             fs = 0
                             self.game_running = True
                             self.run_game()
+
+                        if self.menu_cursor.pos_y == 170:
+                            fs = 0
+                            self.run_new_name()
+
+
+
 
 
             self.game.display.update()
@@ -199,7 +227,7 @@ class PetunaGame:
                     self.treat.rand_move()
                 self.score_value = self.player.points
 
-            # print(self.cat.pos_x, self.cat.pos_y)
+            print(self.cat.pos_x, self.cat.pos_y)
 
             if tmr == 0:
                 self.game_running = False

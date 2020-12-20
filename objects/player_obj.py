@@ -1,8 +1,9 @@
 
 class PlayerObj:
+
     def __init__(self):
         self.points = 0
-        self.player_name = 'Player 1'
+        self.player_name = 'Player1'
 
     def set_player_name(self):
         pass

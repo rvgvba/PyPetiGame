@@ -4,15 +4,19 @@ from objects.petun_obj import PetunaObj
 from objects.treats_obj import TreatObj
 from objects.player_obj import PlayerObj
 from objects.cursor_obj import CursorObj
+import sqlite3
 
 
 class PetunaGame:
     def __init__(self):
         self.game = pygame
         self.game_running = 1
-
         self.wndw_h = 500
         self.wndw_w = 500
+
+        self.db_path = 'scoreboard_db/scores_db'
+        self.db_conn = self.init_db()
+
         self.clock = self.game.time.Clock()
         self.screen = self.game.display.set_mode([self.wndw_h, self.wndw_w])
 
@@ -29,10 +33,36 @@ class PetunaGame:
         self.game.init()
         self.game.mixer.init()
 
-        # self.running_sound = pygame.mixer.music.load('static/audio/cat_eat.mp3')
-        # self.go_sound = pygame.mixer.music.load('static/audio/cat_go.mp3')
+        self.init_db()
 
-    def draw_info(self, text_line=None, x=None, y=None , font_size=25):
+    def init_db(self):
+        conn = sqlite3.connect(self.db_path)
+        return conn
+
+    def read_scoreboard(self):
+        c = self.db_conn.cursor()
+        view_str = "SELECT * FROM scores ORDER BY score DESC LIMIT 5 "
+        c.execute(view_str)
+        res = c.fetchall()
+        return res
+
+    def write_scoreboard(self, name_p, score_p):
+        c = self.db_conn.cursor()
+        update_str = "UPDATE scores SET score =? WHERE name =?"
+        query_str = "SELECT * FROM scores WHERE name =?"
+        sql_str = "INSERT INTO scores (name, score) VALUES (?, ?)"
+
+        c.execute(query_str, (name_p,))
+        result = c.fetchone()
+
+        if result:
+            c.execute(update_str, (score_p, name_p))
+        else:
+            c.execute(sql_str, (name_p, score_p))
+
+        self.db_conn.commit()
+
+    def draw_info(self, text_line=None, x=None, y=None, font_size=25):
         font = self.game.font.SysFont('comicsans', font_size, 1)
         if text_line is None and x is None and y is None:
             render = font.render(f'Score: {self.score_value}', True, (255, 255, 255))
@@ -81,11 +111,37 @@ class PetunaGame:
         self.timer = self.init_timer
         self.player.points = 0
 
-    def run_new_name(self):
+    def show_scoreboard(self):
+        showing_score = 1
+        while showing_score:
+            self.screen.fill((255, 124, 100))
+            self.draw_info(' *** SCOREBOARD *** ', 150, 100)
+
+            for event in self.game.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        showing_score = 0
+                        self.game_start_screen()
+
+            player_details = self.read_scoreboard()
+            self.draw_info(f'Player -- Score', 180, 140)
+
+            x, y = 180, 180
+            for p, s in player_details:
+                self.draw_info(f'{p}     --      {s}', x, y)
+                y += 30
+
+            self.game.display.update()
+
+    def change_player_name(self):
+        """
+        new player name screen
+        :return: player name
+        """
         inserting_new_name = 1
         new_name = ''
         while inserting_new_name:
-            self.screen.fill((255,124,100))
+            self.screen.fill((255, 124, 100))
             self.draw_info('Insert new player name: ', 150, 150)
 
             for event in self.game.event.get():
@@ -94,7 +150,7 @@ class PetunaGame:
                         new_name = new_name[:-1]
                     if event.key == pygame.K_RETURN:
                         self.player.player_name = new_name[:4].upper()
-                        self.run_the_game()
+                        self.game_start_screen()
                         inserting_new_name = 0
                     else:
                         new_name += event.unicode
@@ -102,8 +158,11 @@ class PetunaGame:
             self.draw_info(f'{new_name}', 150, 180)
             self.game.display.update()
 
-
-    def run_the_game(self):
+    def game_start_screen(self):
+        """
+        represents the start screen where user can select START/Change Player Name/SCOREBOARD
+        :return: na
+        """
         fs = 1
         new_player_name = ''
         while fs:
@@ -137,10 +196,11 @@ class PetunaGame:
 
                         if self.menu_cursor.pos_y == 170:
                             fs = 0
-                            self.run_new_name()
+                            self.change_player_name()
 
-
-
+                        if self.menu_cursor.pos_y == 220:
+                            fs = 0
+                            self.show_scoreboard()
 
 
             self.game.display.update()
@@ -148,10 +208,13 @@ class PetunaGame:
 
         self.game.quit()
 
-    def run_game_over(self):
+    def game_over(self):
+        """
+        screen used when the game is done - when the timer is done;
+        :return: na
+        """
 
         self.goSound()
-
         go = 1
         while go:
             self.game.display.update()
@@ -163,16 +226,22 @@ class PetunaGame:
                     go = 0
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
-                        print("SPPACDEEEEEE")
                         go = 0
                         self.game_running = True
                         self.run_game()
+                    if event.key == pygame.K_ESCAPE:
+                        go = 0
+                        self.game_start_screen()
 
             self.clock.tick(60)
 
         self.game.quit()
 
     def run_game(self):
+        """
+        main screen; game itself;
+        :return: na
+        """
 
         self.reset_game()
         self.cat.set_graph()
@@ -231,7 +300,8 @@ class PetunaGame:
 
             if tmr == 0:
                 self.game_running = False
-                self.run_game_over()
+                self.write_scoreboard(self.player.player_name, self.player.points)
+                self.game_over()
 
             self.game.display.update()
             self.clock.tick(60)

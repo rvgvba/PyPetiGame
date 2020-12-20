@@ -32,6 +32,7 @@ class PetunaGame:
 
         self.game.init()
         self.game.mixer.init()
+        self.game.display.set_caption('Petunia Game')
 
         self.init_db()
 

@@ -1,0 +1,8 @@
+First attempt of creating a game in Python using the PyGame framework.
+
+Tech used:
+  - Python
+  - PyGame
+  
+ Game logic:
+   - catch as many as treats you can while the clock is still ticking
